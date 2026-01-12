@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>軍儀 - Gungi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/peerjs@1.5.0/dist/peerjs.min.js"></script>
+</head>
+
+<body>
+    <div id="lobby-screen" class="modal-overlay" style="z-index: 2000; background-color: #1a1a1a; display: flex;">
+        <div class="modal-content lobby-content">
+            <h1 style="font-size:3rem; margin-bottom: 40px;">軍儀</h1>
+            <div id="lobby-main-menu">
+                <button id="btn-local-play" class="btn large" style="width: 100%; margin-bottom: 20px;">ひとりで遊ぶ
+                    (Local)</button>
+                <button id="btn-online-menu" class="btn large" style="width: 100%;">オンライン対戦 (Online)</button>
+            </div>
+
+            <div id="lobby-online-menu" class="hidden">
+                <p style="margin-bottom:20px; color:#aaa;">オンライン対戦</p>
+                <button id="btn-create-room" class="btn"
+                    style="width: 100%; margin-bottom: 15px; background-color: #2a4;">ルームを作成 (Host)</button>
+
+                <div style="height: 1px; background: #444; margin: 20px 0;"></div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="input-room-id" placeholder="相手のIDを入力"
+                        style="flex:1; padding: 10px; background: #222; border: 1px solid #555; color: #eee; border-radius: 4px;">
+                    <button id="btn-join-room" class="btn">参加</button>
+                </div>
+
+                <button id="btn-back-lobby" class="btn small" style="margin-top: 20px;">戻る</button>
+
+                <div id="lobby-status" style="margin-top: 20px; color: #8f8; font-weight: bold; min-height: 1.2em;">
+                </div>
+                <div id="my-id-display" class="hidden"
+                    style="margin-top: 10px; padding: 10px; background: #000; border: 1px dashed #666; font-family: monospace; user-select: text;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app">
+        <header>
+            <h1>軍儀</h1>
+            <div id="game-status">対局開始待ち</div>
+        </header>
+
+        <div class="game-container">
+            <div class="player-area opponent">
+                <div class="player-info">
+                    <span class="name">後手 (白)</span>
+                </div>
+                <div class="captured-pieces" id="opponent-hand"></div>
+            </div>
+
+            <div class="board-container">
+                <div id="board" class="shogi-board"></div>
+            </div>
+
+            <div class="player-area self">
+                <div class="player-info">
+                    <span class="name">先手 (黒)</span>
+                </div>
+                <div class="captured-pieces" id="self-hand"></div>
+            </div>
+        </div>
+
+        <!-- Level Selection Modal -->
+        <div id="level-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h2>対局設定</h2>
+                <div class="level-select">
+                    <button class="level-btn" data-level="BEGINNER">
+                        <span class="lvl-name">入門</span>
+                        <span class="lvl-desc">固定配置 / 特殊駒なし / 2段まで</span>
+                    </button>
+                    <button class="level-btn" data-level="NOVICE">
+                        <span class="lvl-name">初級</span>
+                        <span class="lvl-desc">固定配置 / 弓あり / 2段まで</span>
+                    </button>
+                    <button class="level-btn" data-level="INTERMEDIATE">
+                        <span class="lvl-name">中級</span>
+                        <span class="lvl-desc">自由配置 / 全駒あり / 2段まで / 帥ツケ可</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="cell-details" class="cell-details hidden">
+            <h3>選択されたマス</h3>
+            <div id="stack-list"></div>
+        </div>
+
+        <div id="controls">
+            <button id="draft-done-btn" class="btn hidden"
+                style="background-color: #d4a017; color: #000; font-weight:bold;">配置完了</button>
+            <button id="draft-pass-btn" class="btn hidden">番を返す</button>
+            <button id="restart-btn" class="btn">対局リセット</button>
+            <button id="debug-toggle-btn" class="btn" style="margin-left: 20px;">デバッグモード</button>
+        </div>
+
+        <!-- Debug Panel -->
+        <div id="debug-panel" class="debug-panel hidden">
+            <h3>デバッグ設定</h3>
+            <div class="debug-controls">
+                <label>
+                    駒を選択:
+                    <select id="debug-piece-select">
+                        <option value="Marshal">帥 (Marshal)</option>
+                        <option value="General">大 (General)</option>
+                        <option value="LtGeneral">中 (Lt. General)</option>
+                        <option value="Major">小 (Major)</option>
+                        <option value="Samurai">侍 (Samurai)</option>
+                        <option value="Lance">槍 (Lance)</option>
+                        <option value="Knight">馬 (Knight)</option>
+                        <option value="Ninja">忍 (Ninja)</option>
+                        <option value="Fortress">砦 (Fortress)</option>
+                        <option value="Pawn">兵 (Pawn)</option>
+                        <option value="Cannon">砲 (Cannon)</option>
+                        <option value="Archer">弓 (Archer)</option>
+                        <option value="Musket">筒 (Musket)</option>
+                        <option value="Spy">謀 (Spy)</option>
+                    </select>
+                </label>
+                <label>
+                    段数 (Tier):
+                    <input type="number" id="debug-tier-input" value="1" min="1" max="3">
+                </label>
+                <label>
+                    所属:
+                    <select id="debug-owner-select">
+                        <option value="self">先手 (黒)</option>
+                        <option value="opponent">後手 (白)</option>
+                    </select>
+                </label>
+                <button id="debug-clear-btn" class="btn small">盤面クリア</button>
+                <p class="note">盤面をクリックして駒を配置・移動確認</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+
+</html>

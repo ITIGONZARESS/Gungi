@@ -1,0 +1,428 @@
+:root {
+    /* Colors - Gungi Theme (Dark) */
+    --bg-color: #1a1a1a;
+    --board-color: #2c2c2c;
+    --line-color: #555;
+    --piece-color: #000;
+    /* 黒駒 (先手) */
+    --piece-text-color: #eee;
+    --opponent-piece-color: #eee;
+    /* 白駒 (後手) */
+    --opponent-piece-text-color: #000;
+
+    --highlight-color: rgba(255, 215, 0, 0.3);
+    --selected-color: rgba(0, 180, 255, 0.5);
+
+    --valid-move-color: rgba(0, 255, 100, 0.4);
+    --attack-move-color: rgba(255, 50, 50, 0.5);
+    /* 攻撃可能セル */
+    --stack-move-color: rgba(50, 100, 255, 0.5);
+    /* ツケ可能セル */
+
+    --shadow-color: rgba(0, 0, 0, 0.5);
+
+    --cell-size: min(9vw, 60px);
+    --board-size: calc(var(--cell-size) * 9);
+
+    --font-main: 'Noto Serif JP', serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-main);
+    background-color: var(--bg-color);
+    color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-image: radial-gradient(#333 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+}
+
+h1 {
+    margin: 0 0 10px 0;
+    font-size: 2rem;
+    letter-spacing: 0.2em;
+    color: #ddd;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+#game-status {
+    font-weight: bold;
+    font-size: 1.2rem;
+    height: 1.5em;
+    color: #aaa;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+@media (min-width: 800px) {
+    .game-container {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .player-area {
+        width: 150px;
+        height: var(--board-size);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .player-area.opponent {
+        justify-content: flex-end;
+    }
+}
+
+.shogi-board {
+    width: var(--board-size);
+    height: var(--board-size);
+    background-color: var(--board-color);
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    border: 3px solid #444;
+    box-shadow: 0 15px 30px #000;
+    position: relative;
+    /* デバッグモード時の枠線強調 */
+    box-sizing: border-box;
+}
+
+.cell {
+    border: 1px solid #444;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.piece {
+    width: 90%;
+    height: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: calc(var(--cell-size) * 0.65);
+    /* 文字サイズ変更 */
+    border-radius: 50%;
+    /* 軍儀の駒は丸いイメージで */
+    box-shadow: 2px 2px 5px var(--shadow-color);
+    user-select: none;
+    cursor: pointer;
+    font-weight: bold;
+    position: relative;
+    border: 2px solid #555;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.piece.self {
+    background-color: var(--piece-color);
+    color: var(--piece-text-color);
+    border-color: #444;
+}
+
+.piece.opponent {
+    background-color: var(--opponent-piece-color);
+    color: var(--opponent-piece-text-color);
+    transform: rotate(180deg);
+}
+
+.piece.selected {
+    box-shadow: 0 0 15px var(--selected-color);
+    border-color: #00aaff;
+}
+
+.piece.stacked {
+    /* Stacked appearance hint */
+    box-shadow: 3px 3px 0px #444;
+}
+
+.stack-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ffcc00;
+    color: #000;
+    border-radius: 50%;
+    width: 1.2em;
+    height: 1.2em;
+    font-size: 0.8em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.piece.opponent .stack-badge {
+    transform: rotate(180deg);
+}
+
+/* Valid moves */
+.cell.valid-move::after {
+    content: '';
+    position: absolute;
+    width: 30%;
+    height: 30%;
+    background-color: rgba(100, 255, 100, 0.4);
+    border-radius: 50%;
+}
+
+.cell.valid-move.attack-move::after {
+    background-color: rgba(255, 50, 50, 0.6);
+    width: 40%;
+    height: 40%;
+}
+
+.cell.valid-move.stack-move::after {
+    background-color: rgba(50, 100, 255, 0.6);
+    border: 2px solid #fff;
+}
+
+.player-area {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 8px;
+    min-height: 100px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #444;
+}
+
+.player-info {
+    font-weight: bold;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #444;
+    color: #bbb;
+}
+
+.captured-pieces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 50px;
+}
+
+.captured-pieces .piece {
+    width: 35px;
+    height: 35px;
+    font-size: 1.1rem;
+    position: relative;
+    border-width: 1px;
+}
+
+.captured-pieces .piece.opponent {
+    transform: rotate(0deg);
+}
+
+.btn {
+    background-color: #333;
+    color: #eee;
+    border: 1px solid #555;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #555;
+}
+
+.btn.small {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+}
+
+/* Debug Panel */
+.debug-panel {
+    background-color: rgba(0, 50, 0, 0.1);
+    border: 1px solid #484;
+    padding: 15px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 800px;
+    color: #dfd;
+}
+
+.debug-panel h3 {
+    margin: 0 0 10px 0;
+    color: #efe;
+    border-bottom: 1px solid #484;
+    padding-bottom: 5px;
+}
+
+.debug-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.debug-controls label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.debug-controls select,
+.debug-controls input {
+    background-color: #222;
+    color: #eee;
+    border: 1px solid #555;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.note {
+    font-size: 0.9em;
+    color: #aaa;
+    margin: 0;
+    margin-left: auto;
+}
+
+/* Cell Details */
+.cell-details {
+    background-color: rgba(20, 20, 20, 0.8);
+    border: 1px solid #555;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-top: 10px;
+    width: 90%;
+    max-width: 500px;
+    color: #ddd;
+    text-align: center;
+}
+
+.cell-details h3 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: #aaa;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+}
+
+#stack-list {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.stack-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.stack-item .piece {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    position: relative;
+    /* ensure piece style works */
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #222;
+    border: 1px solid #555;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.modal-content h2 {
+    color: #eee;
+    margin-top: 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.level-select {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.level-btn {
+    background-color: #333;
+    border: 1px solid #555;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.level-btn:hover {
+    background-color: #444;
+    border-color: #888;
+    transform: translateX(5px);
+}
+
+.lvl-name {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.lvl-desc {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.tier-label {
+    font-size: 0.8em;
+    color: #888;
+}

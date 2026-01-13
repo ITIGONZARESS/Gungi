@@ -11,10 +11,6 @@ export class View {
         this.levelModal = document.getElementById('level-modal');
         this.draftDoneBtn = document.getElementById('draft-done-btn');
         this.draftPassBtn = document.getElementById('draft-pass-btn');
-        this.restartBtn = document.getElementById('restart-btn');
-
-        // Check level modal existence manually since it was added dynamically in Game flow notion,
-        // but actually we added it to HTML now.
 
         if (this.levelModal) {
             this.levelModal.querySelectorAll('.level-btn').forEach(btn => {
@@ -38,15 +34,6 @@ export class View {
             });
         }
 
-        this.ensureDebugElements(); // Ensure DOM elements exist
-
-        // Debug elements
-        this.debugToggleBtn = document.getElementById('debug-toggle-btn');
-        this.debugPanel = document.getElementById('debug-panel');
-        this.debugClearBtn = document.getElementById('debug-clear-btn');
-        this.debugPieceSelect = document.getElementById('debug-piece-select');
-        this.debugTierInput = document.getElementById('debug-tier-input');
-        this.debugOwnerSelect = document.getElementById('debug-owner-select');
         this.isDebugMode = false;
 
         this.initDOM();
@@ -67,64 +54,6 @@ export class View {
         document.head.appendChild(style);
     }
 
-    ensureDebugElements() {
-        const controls = document.getElementById('controls');
-        // Add Toggle Button if missing
-        if (controls && !document.getElementById('debug-toggle-btn')) {
-            const btn = document.createElement('button');
-            btn.id = 'debug-toggle-btn';
-            btn.className = 'btn';
-            btn.style.marginLeft = '20px';
-            btn.textContent = 'デバッグモード';
-            controls.appendChild(btn);
-            console.log('Created debug-toggle-btn dynamically');
-        }
-
-        // Add Debug Panel if missing
-        if (!document.getElementById('debug-panel')) {
-            const panel = document.createElement('div');
-            panel.id = 'debug-panel';
-            panel.className = 'debug-panel hidden';
-            panel.innerHTML = `
-            <h3>デバッグ設定</h3>
-            <div class="debug-controls">
-                <label>
-                    駒を選択:
-                    <select id="debug-piece-select">
-                        <option value="Marshal">帥 (Marshal)</option>
-                        <option value="General">大 (General)</option>
-                        <option value="LtGeneral">中 (Lt. General)</option>
-                        <option value="Major">小 (Major)</option>
-                        <option value="Samurai">侍 (Samurai)</option>
-                        <option value="Lance">槍 (Lance)</option>
-                        <option value="Knight">馬 (Knight)</option>
-                        <option value="Ninja">忍 (Ninja)</option>
-                        <option value="Fortress">砦 (Fortress)</option>
-                        <option value="Pawn">兵 (Pawn)</option>
-                        <option value="Cannon">砲 (Cannon)</option>
-                        <option value="Archer">弓 (Archer)</option>
-                        <option value="Musket">筒 (Musket)</option>
-                        <option value="Spy">謀 (Spy)</option>
-                    </select>
-                </label>
-                <label>
-                    段数 (Tier): 
-                    <input type="number" id="debug-tier-input" value="1" min="1" max="3">
-                </label>
-                <label>
-                    所属:
-                    <select id="debug-owner-select">
-                        <option value="self">先手 (黒)</option>
-                        <option value="opponent">後手 (白)</option>
-                    </select>
-                </label>
-                <button id="debug-clear-btn" class="btn small">盤面クリア</button>
-                <p class="note">盤面をクリックして駒を配置・移動確認</p>
-            </div>`;
-            document.getElementById('app').appendChild(panel);
-            console.log('Created debug-panel dynamically');
-        }
-    }
 
     initDOM() {
         this.boardEl.innerHTML = '';
@@ -176,74 +105,9 @@ export class View {
             }
         });
 
-        if (this.restartBtn) {
-            this.restartBtn.addEventListener('click', () => {
-                if (confirm('対局をリセットしますか？')) {
-                    this.game.restart();
-                }
-            });
-        }
-
-        // Debug Listeners
-        if (this.debugToggleBtn) {
-            console.log('Debug button found');
-            this.debugToggleBtn.addEventListener('click', () => {
-                console.log('Debug button clicked');
-                this.isDebugMode = !this.isDebugMode;
-                this.debugPanel.classList.toggle('hidden', !this.isDebugMode);
-                this.updateDebugState();
-            });
-        } else {
-            console.error('Debug button NOT found');
-        }
-
-        if (this.debugClearBtn) {
-            this.debugClearBtn.addEventListener('click', () => {
-                this.game.clearBoard();
-            });
-        }
     }
 
-    updateDebugState() {
-        const title = document.querySelector('h1');
-        if (this.isDebugMode) {
-            this.boardEl.style.borderColor = '#484';
-            title.textContent = '軍儀 (DEBUG MODE)';
-            title.style.color = '#8f8';
-        } else {
-            this.boardEl.style.borderColor = '#444';
-            title.textContent = '軍儀';
-            title.style.color = '#ddd';
-        }
-    }
 
-    handleDebugBoardClick(r, c) {
-        const name = this.debugPieceSelect.value;
-        const tier = parseInt(this.debugTierInput.value) || 1;
-        const owner = this.debugOwnerSelect.value;
-
-        // Place debug piece
-        this.game.debugPlacePiece(r, c, name, owner, tier); // Count as stack height
-
-        // Visualize moves immediately
-        // Need to reconstruct Game logic usage here or add method in Game
-        // Let's create a temporary selected state to show moves
-
-        // Highlight logic
-        this.render(); // Redraw board first
-
-        // Manually calculate moves for visualization
-        // Need to get the piece instance we just placed
-        const piece = this.board.getPiece(r, c);
-        // Note: debugPlacePiece creates 'tier' number of pieces.
-        // So stack height is 'tier'.
-
-        if (piece) {
-            const moves = this.game.calculateMoves(piece, tier, r, c);
-            this.highlightValidMoves(moves);
-            this.highlightSelected(r, c);
-        }
-    }
 
     render() {
         const cells = this.boardEl.querySelectorAll('.cell');
